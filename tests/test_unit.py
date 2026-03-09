@@ -41,7 +41,7 @@ def test_redaction_works():
     text = f"Key: {MOCK_SECRETS['OPENAI_API_KEY']} and {MOCK_SECRETS['AWS_ACCESS_KEY']}."
     secrets = find_secrets(text)
     redacted = redact_secrets(text, secrets)
-    assert redacted == "Key: <OPENAI_API_KEY_REDACTED> and <AWS_ACCESS_KEY_REDACTED>."
+    assert redacted == "Key: [OPENAI_API_KEY_REDACTED] and [AWS_ACCESS_KEY_REDACTED]."
 
 @patch('sys.stdin.isatty', return_value=False)
 def test_unattended_pipeline_silently_redacts(mock_isatty):
@@ -53,7 +53,7 @@ def test_unattended_pipeline_silently_redacts(mock_isatty):
         result = guard_messages(messages)
     
         # Should be redacted
-        assert "<OPENAI_API_KEY_REDACTED>" in result[0]["content"]
+        assert "[OPENAI_API_KEY_REDACTED]" in result[0]["content"]
         assert MOCK_SECRETS['OPENAI_API_KEY'] not in result[0]["content"]
         
         # Original message should NOT be mutated
@@ -64,7 +64,7 @@ def test_unattended_pipeline_silently_redacts(mock_isatty):
 def test_interactive_redact(mock_input, mock_isatty):
     messages = [{"role": "user", "content": f"Key: {MOCK_SECRETS['GITHUB_TOKEN']}"}]
     result = guard_messages(messages)
-    assert "<GITHUB_TOKEN_REDACTED>" in result[0]["content"]
+    assert "[GITHUB_TOKEN_REDACTED]" in result[0]["content"]
 
 @patch('sys.stdin.isatty', return_value=True)
 @patch('builtins.input', return_value='s')
@@ -96,5 +96,5 @@ def test_nested_content_blocks():
     with patch('sys.stdin.isatty', return_value=False):
         result = guard_messages(messages)
         content = result[0]["content"]
-        assert "<OPENAI_API_KEY_REDACTED>" in content[1]["text"]
+        assert "[OPENAI_API_KEY_REDACTED]" in content[1]["text"]
         assert MOCK_SECRETS['OPENAI_API_KEY'] not in content[1]["text"]

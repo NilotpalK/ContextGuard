@@ -71,5 +71,5 @@ def redact_secrets(text: str, secrets: List[Tuple[str, str]]) -> str:
     """Replaces exact secret strings with generic labels."""
     redacted_text = text
     for label, secret in secrets:
-        redacted_text = redacted_text.replace(secret, f"<{label}_REDACTED>")
+        redacted_text = redacted_text.replace(secret, f"[{label}_REDACTED]")
     return redacted_text
