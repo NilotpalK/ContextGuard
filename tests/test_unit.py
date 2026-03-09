@@ -98,3 +98,21 @@ def test_nested_content_blocks():
         content = result[0]["content"]
         assert "[OPENAI_API_KEY_REDACTED]" in content[1]["text"]
         assert MOCK_SECRETS['OPENAI_API_KEY'] not in content[1]["text"]
+
+def test_gemini_contents_redaction():
+    from contextguard.guard import guard_gemini_contents
+    
+    # 1. Test bare string
+    content_str = f"Here is my code {MOCK_SECRETS['OPENAI_API_KEY']}!"
+    with patch('sys.stdin.isatty', return_value=False):
+        res_str = guard_gemini_contents(content_str)
+        assert "[OPENAI_API_KEY_REDACTED]" in res_str
+        assert MOCK_SECRETS['OPENAI_API_KEY'] not in res_str
+        
+    # 2. Test list of dicts with parts
+    content_list = [{"parts": [{"text": f"API KEY: {MOCK_SECRETS['OPENAI_API_KEY']}"}]}]
+    with patch('sys.stdin.isatty', return_value=False):
+        res_list = guard_gemini_contents(content_list)
+        assert "[OPENAI_API_KEY_REDACTED]" in res_list[0]["parts"][0]["text"]
+        assert MOCK_SECRETS['OPENAI_API_KEY'] not in res_list[0]["parts"][0]["text"]
+

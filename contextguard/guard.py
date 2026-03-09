@@ -105,3 +105,90 @@ def guard_messages(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                             part["text"] = redact_secrets(text, secrets)
                             
         return guarded_messages
+
+def guard_gemini_contents(contents: Any) -> Any:
+    """
+    Scans the Gemini contents array (or string/Content objects) for secrets.
+    Depending on TTY presence and user choice, either redacts, passes through, or blocks.
+    Returns the (potentially redacted) contents.
+    """
+    try:
+        from google import genai
+    except ImportError:
+        pass # Handle when used without standard type checking available
+        
+    # We must operate on a deep copy
+    guarded_contents = copy.deepcopy(contents)
+    
+    all_secrets_found = []
+    
+    # helper for recursion into Gemini's format
+    def extract_secrets_from_part(part: Any):
+        if hasattr(part, "text") and getattr(part, "text"):
+            all_secrets_found.extend(find_secrets(part.text))
+            
+    def scan_content(c: Any):
+        if isinstance(c, str):
+            all_secrets_found.extend(find_secrets(c))
+        elif isinstance(c, dict) and "parts" in c:
+            for p in c["parts"]:
+                if isinstance(p, dict) and "text" in p:
+                    all_secrets_found.extend(find_secrets(p["text"]))
+        elif hasattr(c, "parts"):
+            for p in c.parts:
+                extract_secrets_from_part(p)
+                
+    # Initial scan
+    if isinstance(guarded_contents, list):
+        for item in guarded_contents:
+            scan_content(item)
+    else:
+        scan_content(guarded_contents)
+        
+    if not all_secrets_found:
+        return guarded_contents
+        
+    # Secrets were found, decide on action
+    action = 'r' # default
+    
+    if sys.stdin.isatty():
+        action = _get_interactive_choice(all_secrets_found)
+    else:
+        print(f"⚠️ CONTEXTGUARD: Secrets detected and redacted in unattended mode: {', '.join([l for l, _ in all_secrets_found])}", file=sys.stderr)
+        action = 'r'
+        
+    if action == 'b':
+        raise SecretLeakError("Message blocked by user due to detected secrets.")
+    elif action == 's':
+        return contents
+    elif action == 'r':
+        # Apply redaction
+        def redact_part(part: Any):
+            if hasattr(part, "text") and getattr(part, "text"):
+                sec = find_secrets(part.text)
+                if sec:
+                    part.text = redact_secrets(part.text, sec)
+                    
+        def redact_c(c: Any):
+            if isinstance(c, str):
+                sec = find_secrets(c)
+                if sec:
+                    return redact_secrets(c, sec)
+            elif isinstance(c, dict) and "parts" in c:
+                for p in c["parts"]:
+                    if isinstance(p, dict) and "text" in p:
+                        sec = find_secrets(p["text"])
+                        if sec:
+                            p["text"] = redact_secrets(p["text"], sec)
+            elif hasattr(c, "parts"):
+                for p in c.parts:
+                    redact_part(p)
+            return c
+            
+        if isinstance(guarded_contents, list):
+            for i in range(len(guarded_contents)):
+                guarded_contents[i] = redact_c(guarded_contents[i])
+        else:
+            guarded_contents = redact_c(guarded_contents)
+            
+        return guarded_contents

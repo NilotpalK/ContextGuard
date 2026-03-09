@@ -25,8 +25,9 @@ When users or agents accidentally include secrets (API keys, JWTs, tokens) in me
 
 ContextGuard is available via pip (requires `openai >= 1.0.0`):
 ```bash
-pip install contextguard
+pip install "contextguard[all]"
 ```
+*(Using `[all]` installs the optional dependencies for Anthropic and Google GenAI support).*
 
 *(Note: If installing locally from this repository during development, use `pip install -e .`)*
 
@@ -66,6 +67,43 @@ from contextguard import GuardedOpenAI as OpenAI
 client = OpenAI(
     api_key="sk-or-your-real-key",
     base_url="https://openrouter.ai/api/v1"
+)
+```
+
+### Anthropic Client
+
+```python
+# Before
+from anthropic import Anthropic
+
+# After
+from contextguard import GuardedAnthropic as Anthropic
+
+client = Anthropic(api_key="sk-ant-your-real-key")
+
+response = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1000,
+    messages=[
+        {"role": "user", "content": "Here is my code for review: sk-ant-1234567890..."}
+    ]
+)
+```
+
+### Google GenAI (Gemini) Client
+
+```python
+# Before
+from google import genai
+
+# After
+from contextguard import GuardedGemini
+
+client = GuardedGemini(api_key="gemini-api-key")
+
+response = client.models.generate_content(
+    model='gemini-2.5-flash',
+    contents='Tell me a story about this key: AKIA1234567890ABCDEF',
 )
 ```
 
