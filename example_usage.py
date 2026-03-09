@@ -28,14 +28,19 @@ def main():
     ]
     
     try:
-        # 3. Create the completion using the original messages.
-        # GuardedOpenAI will automatically intercept this call and scan it!
+        # By passing it through the guard directly first, we can print it out!
+        # (Normally, client.chat.completions.create does this automatically behind the scenes)
+        safe_messages = guard_messages(messages)
+        
+        print("\n--- WHAT THE LLM ACTUALLY RECEIVES ---")
+        print(safe_messages[0]["content"])
+        print("--------------------------------------\n")
+
+        # 3. Create the completion using the now-safe messages.
         response = client.chat.completions.create(
             model="openai/gpt-4o-mini", 
-            messages=messages
+            messages=safe_messages
         )
-        
-        print("\n--- LLM RESPONSE ---")
         print(response.choices[0].message.content)
 
     except Exception as e:
