@@ -1,4 +1,6 @@
-
+<p align="center">
+  <img src="img/image.png" alt="ContextGuard Logo" height="1920" width="200">
+</p>
 
 # ContextGuard
 
