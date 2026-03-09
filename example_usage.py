@@ -16,7 +16,7 @@ def main():
     # Note: We are using a dummy key and base_url so this script 
     # runs without charging you money.
     client = OpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY", "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"),
+        api_key=os.environ.get("OPENAI_API_KEY", "PUT-YOUR-KEY-HERE"),
         # Using openrouter for testing purposes
         base_url="https://openrouter.ai/api/v1" 
     )
@@ -28,19 +28,14 @@ def main():
     ]
     
     try:
-        # By passing it through the guard directly first, we can print it out!
-        # (Normally, client.chat.completions.create does this automatically behind the scenes)
-        safe_messages = guard_messages(messages)
-        
-        print("\n--- WHAT THE LLM ACTUALLY RECEIVES ---")
-        print(safe_messages[0]["content"])
-        print("--------------------------------------\n")
-
-        # 3. Create the completion using the now-safe messages.
+        # 3. Create the completion using the original messages.
+        # GuardedOpenAI will automatically intercept this call and scan it!
         response = client.chat.completions.create(
             model="openai/gpt-4o-mini", 
-            messages=safe_messages
+            messages=messages
         )
+        
+        print("\n--- LLM RESPONSE ---")
         print(response.choices[0].message.content)
 
     except Exception as e:
