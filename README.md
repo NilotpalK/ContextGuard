@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="img/image.png" alt="ContextGuard Logo" width="100%">
+  <img src="img/image.png" alt="ContextGuard Logo" width="80%">
 </p>
 
 # ContextGuard
