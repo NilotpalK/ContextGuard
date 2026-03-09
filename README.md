@@ -23,9 +23,9 @@ When users or agents accidentally include secrets (API keys, JWTs, tokens) in me
 
 ## Installation
 
-ContextGuard is available via pip (requires `openai >= 1.0.0`):
+ContextGuard is currently available to install directly from GitHub (requires `openai >= 1.0.0`):
 ```bash
-pip install "contextguard[all]"
+pip install "git+https://github.com/NilotpalK/ContextGuard.git#egg=contextguard[all]"
 ```
 *(Using `[all]` installs the optional dependencies for Anthropic and Google GenAI support).*
 
